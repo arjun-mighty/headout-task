@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 
 permissions:
@@ -21,3 +22,7 @@ jobs:
       run: uv sync
     - name: Run Script
       run: uv run main.py
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        file: webserver/Dockerfile
