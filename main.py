@@ -1,6 +1,7 @@
 """Script to Deploy jar"""
 
 import subprocess
+import os
 import sys
 
 from loguru import logger
@@ -12,7 +13,7 @@ logger.add(
     colorize=True,
 )
 
-def generate_dockerfile(jarfile: str):
+def generate_dockerfile(jarfile: str, output_dir: str):
     """Generate Dockerfile for a jarfile"""
     logger.info(f"Generating Dockerfile for: {jarfile}")
 
@@ -24,33 +25,33 @@ COPY build/lib/ /app
 WORKDIR /app
 ENTRYPOINT ["java", "-jar", "{jarfile}"]
 """
-    with open("Dockerfile", "w") as f:
+    with open(f"{output_dir}/Dockerfile", "w") as f:
         f.write(content)
 
 
 def main():
     """Main fn"""
-
+    target_dir = "webservice"
     logger.info("Trying to clone git repo.")
     try:
-        subprocess.run("git clone https://github.com/arjun-mighty/headout_jar.git webservice", shell=True, check=True)
+        subprocess.run(f"git clone https://github.com/arjun-mighty/headout_jar.git {target_dir}", shell=True, check=True)
     except subprocess.CalledProcessError:
         logger.error("Failed to clone git repo.")
         sys.exit()
 
     logger.info("Infering jar file name.")
     try:
-        jarfile = ""
-        infer_proc_out = subprocess.run("ls -t1 webservice/build/lib | head -n1", shell=True, check=True, capture_output=True, text=True)
+        infer_proc_out = subprocess.run(f"ls -t1 {target_dir}/build/lib | head -n1", shell=True, check=True, capture_output=True, text=True)
         jarfile = infer_proc_out.stdout.strip()
         logger.info(f"Found jar file: {jarfile}")
     except subprocess.CalledProcessError:
         logger.error("Failed to infer jar file name.")
         sys.exit()
 
-
     try:
-        generate_dockerfile("testing.jar")
+        generate_dockerfile(jarfile, target_dir)
+    except FileNotFoundError:
+        logger.error("Output Dir doesn't exists.")
     except Exception:
         logger.error("Failed generating docker file.")
 
