@@ -59,4 +59,4 @@ jobs:
           docker ps -q --filter "name=$WS_NAME" |xargs --no-run-if-empty docker stop
           docker ps -aq --filter "name=$WS_NAME" |xargs --no-run-if-empty docker rm
           docker load -i headout-test.tar
-          docker run --detach -p9000:9000 --name $WS_NAME headout-test
+          docker run --detach -p80:9000 --name $WS_NAME headout-test
