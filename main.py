@@ -34,7 +34,7 @@ def main():
     target_dir = "webservice"
     logger.info("Trying to clone git repo.")
     try:
-        subprocess.run(f"git clone https://github.com/arjun-mighty/headout_jar.git {target_dir}", shell=True, check=True)
+        subprocess.run(f"git clone git@github.com:arjun-mighty/headout_jar.git {target_dir}", shell=True, check=True)
     except subprocess.CalledProcessError:
         logger.error("Failed to clone git repo.")
         sys.exit()

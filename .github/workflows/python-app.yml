@@ -16,6 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: webfactory/ssh-agent@v0.9.0
+      with:
+          ssh-private-key: ${{ secrets.GH_SSH_KEY }}
     - name: Install uv
       uses: astral-sh/setup-uv@v6
     - name: Install dependencies
@@ -30,9 +33,30 @@ jobs:
         context: webservice
         file: webservice/Dockerfile
         push: false
-        tags: headout-test
-    - name: Export image
+        load: true
+        tags: headout-test:latest
+    - name: Export Image to disk
       run: docker save --output="headout-test.tar" headout-test:latest
     - name: Tree
       run: tree 
-
+    - name: Copy Image via SSH
+      uses: appleboy/scp-action@v1
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ubuntu
+        key: ${{ secrets.AWS_SSH_KEY }}
+        source: headout-test.tar
+        target: ~/app
+    - name: Start container in EC2
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ubuntu
+        key: ${{ secrets.AWS_SSH_KEY }}
+        script: |
+          cd ~/app
+          WS_NAME=headout-webserver
+          docker ps -q --filter "name=$WS_NAME" |xargs --no-run-if-empty docker stop
+          docker ps -aq --filter "name=$WS_NAME" |xargs --no-run-if-empty docker rm
+          docker load -i headout-test.tar
+          docker run --detach -p9000:9000 --name $WS_NAME headout-test
